@@ -6,12 +6,12 @@ import org.scalatest.BeforeAndAfterAll
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util.Random
+import BankActor.BankAccount
+import BankAccount._
 
 class BankAccountSpec extends TestKit(ActorSystem("testSystem"))
   with AnyWordSpecLike with BeforeAndAfterAll with ImplicitSender {
 
-  import BankActorSpec.BankAccount._
-  import BankActorSpec.BankAccount
   import BankActorSpec.Person
   import BankActorSpec.Person._
 
@@ -60,47 +60,6 @@ class BankAccountSpec extends TestKit(ActorSystem("testSystem"))
 
 }
 object BankActorSpec {
-  object BankAccount {
-    case class Deposit(amount: Int)
-
-    case class Withdraw(amount: Int)
-
-    case object Statement
-
-    case class TransactionSuccess(message: String)
-
-    case class TransactionFailure(message: String)
-  }
-
-  class BankAccount extends Actor with ActorLogging {
-
-    import BankAccount._
-
-    override def receive: Receive = accountReceive(0)
-
-    def accountReceive(balance: Int): Receive = {
-      case Deposit(amount) =>
-        if (amount < 0) sender() ! TransactionFailure("invalid deposit amount")
-        else {
-          val newBalance = balance + amount
-          context.become(accountReceive(newBalance))
-          log.info(sender().toString())
-          sender() ! TransactionSuccess(s"Successfully Deposited $amount, Total Balance : $newBalance")
-        }
-
-      case Withdraw(amount) =>
-        if (amount < 0) sender() ! TransactionFailure("invalid withdraw amount")
-        else if (amount > balance) sender() ! TransactionFailure("Withdrawal amount is bigger than balance")
-        else {
-          val newBalance = balance - amount
-          context.become(accountReceive(newBalance))
-          sender() ! TransactionSuccess(s"Successfully Withdrawal $amount, Total Balance: $newBalance")
-        }
-
-      case Statement => sender() ! s"Your balance is $balance"
-    }
-  }
-
   object Person {
     case class LiveTheLife(account: ActorRef)
   }

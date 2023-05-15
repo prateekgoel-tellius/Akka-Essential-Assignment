@@ -1,4 +1,5 @@
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 
 object BankActor extends App {
 
@@ -10,7 +11,8 @@ object BankActor extends App {
     case class TransactionFailure(message: String)
   }
 
-  class BankAccount extends Actor {
+  class BankAccount extends Actor with ActorLogging {
+
     import BankAccount._
 
     override def receive: Receive = accountReceive(0)
@@ -21,6 +23,7 @@ object BankActor extends App {
         else {
           val newBalance = balance + amount
           context.become(accountReceive(newBalance))
+          log.info(sender().toString())
           sender() ! TransactionSuccess(s"Successfully Deposited $amount, Total Balance : $newBalance")
         }
 
@@ -32,7 +35,6 @@ object BankActor extends App {
           context.become(accountReceive(newBalance))
           sender() ! TransactionSuccess(s"Successfully Withdrawal $amount, Total Balance: $newBalance")
         }
-
       case Statement => sender() ! s"Your balance is $balance"
     }
   }

@@ -1,7 +1,9 @@
+import SupervisorSimpleLoggerActor.LoggerActor
 import akka.actor.ActorSystem
 
 import java.io.{File, FileWriter}
 import akka.actor.{Actor, Props}
+
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -18,8 +20,11 @@ object SimpleLoggerActor extends App {
 
     case class RollingFileAppender(newFilename: String) // for the filename change
   }
+
   class LoggerActor extends Actor {
+
     import LoggerActor._
+
     val warningFile = new File("warning.log")
     val infoFile = new File("info.log")
 
@@ -39,9 +44,16 @@ object SimpleLoggerActor extends App {
         infoWriter.flush()
         warningWriter.close()
         infoWriter.close()
-        if (warningFile.exists()) warningFile.renameTo(new File(newFilename + ".warning.log"))
-        if (infoFile.exists()) infoFile.renameTo(new File(newFilename + ".info.log"))
+        if (warningFile.exists())
+          warningFile.renameTo(new File(newFilename + ".warning.log"))
+
+        if (infoFile.exists())
+          infoFile.renameTo(new File(newFilename + ".info.log"))
+
         context.become(withWriters(new FileWriter(warningFile, true), new FileWriter(infoFile, true)))
+      case _ =>
+        throw new RuntimeException("Not a valid case.")
+
     }
   }
 
